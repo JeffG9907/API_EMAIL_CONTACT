@@ -6,27 +6,30 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const { EMAIL_USER, EMAIL_PASS, EMAIL_TO } = process.env;
+const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_TO } = process.env;
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
+  host: SMTP_HOST,
+  port: Number(SMTP_PORT),
   auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS
-  }
+    user: SMTP_USER,
+    pass: SMTP_PASS
+  },
+  secure: Number(SMTP_PORT) === 465
 });
 
 app.post("/api/contact", async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, subject, message } = req.body;
 
-  if (!(name && email && message)) {
+  if (!(name && email && subject && message)) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
 
   const mailOptions = {
-    from: `"${name}" <${email}>`,
-    to: EMAIL_TO,
-    subject: "Nuevo mensaje de contacto desde el portafolio",
+    from: `"${name}" <${email}>`,     // Quien envía el mensaje
+    to: EMAIL_TO,                     // Tu correo receptor
+    replyTo: email,                   // Para responder fácil
+    subject: subject,                 // Asunto personalizado
     text: `Nombre: ${name}\nEmail: ${email}\nMensaje:\n${message}`
   };
 
