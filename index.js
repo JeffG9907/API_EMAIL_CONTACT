@@ -26,8 +26,6 @@ app.post("/api/contact", async (req, res) => {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
 
-  // Aquí debes poner el remitente validado en Brevo, por ejemplo:
-  // jcagua4477@utm.edu.ec (actualiza este correo al que tengas validado)
   const mailOptions = {
     from: `"${name}" <jcagua4477@utm.edu.ec>`, // Remitente validado
     to: EMAIL_TO, // Destinatario
@@ -42,6 +40,64 @@ app.post("/api/contact", async (req, res) => {
   } catch (error) {
     console.error("Error enviando correo:", error);
     res.status(500).json({ success: false, message: "Error al enviar el mensaje." });
+  }
+});
+
+// ENDPOINT NUEVO PARA ENVÍO AUTOMÁTICO DE ALERTAS DINÁMICAS
+function generarMensaje({ nombre, ph, temperatura, fechaHora, alertaPh, alertaTemp }) {
+  let alerta = '';
+  if (alertaPh && alertaTemp) {
+    alerta = 'una variación crítica en los parámetros de pH y temperatura de tu sistema hidropónico.';
+  } else if (alertaPh) {
+    alerta = 'una variación crítica en el pH de tu sistema hidropónico.';
+  } else if (alertaTemp) {
+    alerta = 'una variación crítica en la temperatura de tu sistema hidropónico.';
+  } else {
+    alerta = 'un evento en tu sistema hidropónico.';
+  }
+
+  let valores = '';
+  if (alertaPh) {
+    valores += `pH actual: ${ph} (Rango recomendado: 5.5 – 6.5)\n\n`;
+  }
+  if (alertaTemp) {
+    valores += `Temperatura: ${temperatura}°C (Rango recomendado: 18 – 28 °C)\n\n`;
+  }
+
+  return (
+    `Estimado/a ${nombre},\n\n` +
+    `Te informamos que se ha detectado ${alerta} A continuación, se detallan los valores actuales registrados:\n\n` +
+    valores +
+    `Fecha y hora del evento: ${fechaHora}\n\n` +
+    `🚨 Recomendación: Te sugerimos verificar el sistema y tomar acciones correctivas de inmediato para evitar daños en el cultivo.\n\n` +
+    `Este mensaje ha sido generado automáticamente por el sistema de monitoreo inteligente de cultivos.\n\n` +
+    `Atentamente,\nEquipo SmartGrow\n`
+  );
+}
+
+app.post("/api/send-auto-alert", async (req, res) => {
+  const { to, nombre, ph, temperatura, fechaHora, alertaPh, alertaTemp } = req.body;
+
+  if (!(to && nombre && fechaHora && (alertaPh || alertaTemp))) {
+    return res.status(400).json({ success: false, message: "Faltan campos obligatorios o no hay alertas activas." });
+  }
+
+  const subject = "🚨 Alerta de parámetros críticos en tu sistema hidropónico";
+  const text = generarMensaje({ nombre, ph, temperatura, fechaHora, alertaPh, alertaTemp });
+
+  const mailOptions = {
+    from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`, // Remitente validado
+    to,
+    subject,
+    text,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Correo de alerta enviado correctamente." });
+  } catch (error) {
+    console.error("Error enviando correo automático:", error);
+    res.status(500).json({ success: false, message: "Error al enviar el correo automático." });
   }
 });
 
