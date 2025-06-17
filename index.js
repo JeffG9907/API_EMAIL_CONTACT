@@ -37,6 +37,8 @@ app.post("/api/contact", async (req, res) => {
     await transporter.sendMail(mailOptions);
     res.status(200).json({ success: true, message: "Mensaje enviado correctamente." });
   } catch (error) {
+    // AGREGA ESTE LOG PARA VER EL ERROR DETALLADO EN RAILWAY
+    console.error("Error enviando correo:", error);
     res.status(500).json({ success: false, message: "Error al enviar el mensaje." });
   }
 });
