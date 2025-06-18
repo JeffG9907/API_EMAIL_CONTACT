@@ -19,6 +19,7 @@ const transporter = nodemailer.createTransport({
   secure: Number(SMTP_PORT) === 465,
 });
 
+// Endpoint para contacto tradicional
 app.post("/api/contact", async (req, res) => {
   const { name, email, subject, message } = req.body;
 
@@ -43,7 +44,7 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
-// ENDPOINT NUEVO PARA ENVÍO AUTOMÁTICO DE ALERTAS DINÁMICAS
+// ENDPOINT PARA ALERTAS DINÁMICAS (pH y temperatura fuera de rango)
 function generarMensaje({ nombre, ph, temperatura, fechaHora, alertaPh, alertaTemp }) {
   let alerta = '';
   if (alertaPh && alertaTemp) {
@@ -98,6 +99,41 @@ app.post("/api/send-auto-alert", async (req, res) => {
   } catch (error) {
     console.error("Error enviando correo automático:", error);
     res.status(500).json({ success: false, message: "Error al enviar el correo automático." });
+  }
+});
+
+// NUEVO ENDPOINT: Notificación de conexión exitosa de sistema hidropónico + datos iniciales
+app.post("/api/send-system-connected", async (req, res) => {
+  const { to, nombre, nombreSistema, idSistema, fechaHora, ph, temperatura, fechaHoraLectura } = req.body;
+  if (!(to && nombre && nombreSistema && idSistema && fechaHora)) {
+    return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
+  }
+
+  const subject = "¡Tu sistema hidropónico ha sido conectado exitosamente!";
+  const text =
+    `Hola ${nombre},\n\n` +
+    `Te informamos que tu sistema hidropónico "${nombreSistema}" (ID: ${idSistema}) ha sido conectado correctamente.\n\n` +
+    `Fecha y hora de conexión: ${fechaHora}\n\n` +
+    (ph !== undefined && temperatura !== undefined
+      ? `Primeros parámetros registrados:\n- Temperatura: ${temperatura}°C\n- pH: ${ph}\n${fechaHoraLectura ? "- Fecha de la lectura: " + fechaHoraLectura + "\n" : ""}\n`
+      : ""
+    ) +
+    `Ya puedes monitorear los parámetros y recibir alertas automáticas en esta cuenta de correo.\n\n` +
+    `¡Gracias por confiar en SmartGrow!\n\nEquipo SmartGrow`;
+
+  const mailOptions = {
+    from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
+    to,
+    subject,
+    text,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Correo de confirmación enviado correctamente." });
+  } catch (error) {
+    console.error("Error enviando correo de conexión:", error);
+    res.status(500).json({ success: false, message: "Error al enviar el correo de conexión." });
   }
 });
 
