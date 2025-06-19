@@ -21,7 +21,12 @@ const transporter = nodemailer.createTransport({
 
 // Endpoint para contacto tradicional
 app.post("/api/contact", async (req, res) => {
-  const { name, email, subject, message } = req.body;
+  const { 
+    name, 
+    email, 
+    subject, 
+    message 
+  } = req.body;
 
   if (!(name && email && subject && message)) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
@@ -45,7 +50,14 @@ app.post("/api/contact", async (req, res) => {
 });
 
 // ENDPOINT PARA ALERTAS DINÁMICAS (pH y temperatura fuera de rango)
-function generarMensaje({ nombre, ph, temperatura, fechaHora, alertaPh, alertaTemp }) {
+function generarMensaje({ 
+  nombre, 
+  ph, 
+  temperatura, 
+  fechaHora, 
+  alertaPh, 
+  alertaTemp 
+}) {
   let alerta = '';
   if (alertaPh && alertaTemp) {
     alerta = 'una variación crítica en los parámetros de pH y temperatura de tu sistema hidropónico.';
@@ -77,7 +89,15 @@ function generarMensaje({ nombre, ph, temperatura, fechaHora, alertaPh, alertaTe
 }
 
 app.post("/api/send-auto-alert", async (req, res) => {
-  const { to, nombre, ph, temperatura, fechaHora, alertaPh, alertaTemp } = req.body;
+  const { 
+    to, 
+    nombre, 
+    ph, 
+    temperatura, 
+    fechaHora, 
+    alertaPh, 
+    alertaTemp 
+  } = req.body;
 
   if (!(to && nombre && fechaHora && (alertaPh || alertaTemp))) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios o no hay alertas activas." });
@@ -102,9 +122,65 @@ app.post("/api/send-auto-alert", async (req, res) => {
   }
 });
 
-// NUEVO ENDPOINT: Notificación de conexión exitosa de sistema hidropónico + datos iniciales
+// NUEVO ENDPOINT: Notificación de sensor deshabilitado
+app.post("/api/send-disabled-sensor-alert", async (req, res) => {
+  const { 
+    to, 
+    nombre, 
+    sensor,  // "temp" o "ph"
+    nombreSistema, 
+    idSistema, 
+    fechaHora 
+  } = req.body;
+
+  if (!(to && nombre && sensor && nombreSistema && idSistema && fechaHora)) {
+    return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
+  }
+
+  // Traducción para el nombre del sensor
+  const sensorMap = {
+    temp: "Temperatura",
+    ph: "pH"
+  };
+
+  const subject = `⚠️ Sensor de ${sensorMap[sensor] || sensor} deshabilitado en tu sistema hidropónico`;
+  const text =
+    `Hola ${nombre},\n\n` +
+    `Te informamos que el sensor de ${sensorMap[sensor] || sensor} ha sido deshabilitado en tu sistema hidropónico "${nombreSistema}" (ID: ${idSistema}).\n\n` +
+    `Fecha y hora de la acción: ${fechaHora}\n\n` +
+    `Mientras este sensor esté deshabilitado, no se registrarán ni enviarán alertas sobre este parámetro.\n\n` +
+    `Puedes volver a habilitarlo desde la plataforma cuando lo desees.\n\n` +
+    `Este mensaje ha sido generado automáticamente por el sistema de monitoreo inteligente de cultivos.\n\n` +
+    `Atentamente,\nEquipo SmartGrow\n`;
+
+  const mailOptions = {
+    from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
+    to,
+    subject,
+    text,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Correo de alerta de sensor deshabilitado enviado correctamente." });
+  } catch (error) {
+    console.error("Error enviando correo de sensor deshabilitado:", error);
+    res.status(500).json({ success: false, message: "Error al enviar el correo de sensor deshabilitado." });
+  }
+});
+
+// ENDPOINT: Notificación de conexión exitosa de sistema hidropónico + datos iniciales
 app.post("/api/send-system-connected", async (req, res) => {
-  const { to, nombre, nombreSistema, idSistema, fechaHora, ph, temperatura, fechaHoraLectura } = req.body;
+  const { 
+    to, 
+    nombre, 
+    nombreSistema, 
+    idSistema, 
+    fechaHora, 
+    ph, 
+    temperatura, 
+    fechaHoraLectura 
+  } = req.body;
   if (!(to && nombre && nombreSistema && idSistema && fechaHora)) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
