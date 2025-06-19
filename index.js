@@ -19,6 +19,19 @@ const transporter = nodemailer.createTransport({
   secure: Number(SMTP_PORT) === 465,
 });
 
+// ---------- Utilidad para fecha y hora en formato 24 horas español ----------
+function formatearFechaHora(fecha = new Date()) {
+  return new Date(fecha).toLocaleString('es-EC', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+}
+
 // Endpoint para contacto tradicional
 app.post("/api/contact", async (req, res) => {
   const { 
@@ -146,17 +159,22 @@ app.post("/api/send-disabled-sensor-alert", async (req, res) => {
 
   const accion = estado === 'habilitado' ? 'habilitado' : 'deshabilitado';
   const subject = `⚠️ Sensor de ${sensorMap[sensor] || sensor} ${accion} en tu sistema hidropónico`;
-  const text =
+
+  // Cuerpo del mensaje, ahora ambos sensores tienen mensaje extenso y uniforme
+  let text = 
     `Hola ${nombre},\n\n` +
     `Te informamos que el sensor de ${sensorMap[sensor] || sensor} ha sido **${accion}** en tu sistema hidropónico "${nombreSistema}" (ID: ${idSistema}).\n\n` +
-    `Fecha y hora de la acción: ${fechaHora}\n\n` +
-    (accion === 'deshabilitado'
-      ? `Mientras este sensor esté deshabilitado, no se registrarán ni enviarán alertas sobre este parámetro.\n\n`
-      : ''
-    ) +
+    `Fecha y hora de la acción: ${fechaHora}\n\n`;
+
+  if (accion === 'deshabilitado') {
+    text +=
+      `Mientras este sensor esté deshabilitado, no se registrarán ni enviarán alertas sobre este parámetro.\n\n`;
+  }
+  
+  text +=
     `Puedes cambiar su estado desde la plataforma cuando lo desees.\n\n` +
     `Este mensaje ha sido generado automáticamente por el sistema de monitoreo inteligente de cultivos.\n\n` +
-    `Atentamente,\nEquipo SmartGrow\n`;
+    `Atentamente,\nEquipo SmartGrow`;
 
   const mailOptions = {
     from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
