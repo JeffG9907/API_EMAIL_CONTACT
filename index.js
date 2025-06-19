@@ -122,7 +122,7 @@ app.post("/api/send-auto-alert", async (req, res) => {
   }
 });
 
-// NUEVO ENDPOINT: Notificación de sensor deshabilitado
+// ENDPOINT: Notificación de sensor deshabilitado o habilitado
 app.post("/api/send-disabled-sensor-alert", async (req, res) => {
   const { 
     to, 
@@ -130,10 +130,11 @@ app.post("/api/send-disabled-sensor-alert", async (req, res) => {
     sensor,  // "temp" o "ph"
     nombreSistema, 
     idSistema, 
-    fechaHora 
+    fechaHora,
+    estado // 'habilitado' o 'deshabilitado'
   } = req.body;
 
-  if (!(to && nombre && sensor && nombreSistema && idSistema && fechaHora)) {
+  if (!(to && nombre && sensor && nombreSistema && idSistema && fechaHora && estado)) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
 
@@ -143,13 +144,17 @@ app.post("/api/send-disabled-sensor-alert", async (req, res) => {
     ph: "pH"
   };
 
-  const subject = `⚠️ Sensor de ${sensorMap[sensor] || sensor} deshabilitado en tu sistema hidropónico`;
+  const accion = estado === 'habilitado' ? 'habilitado' : 'deshabilitado';
+  const subject = `⚠️ Sensor de ${sensorMap[sensor] || sensor} ${accion} en tu sistema hidropónico`;
   const text =
     `Hola ${nombre},\n\n` +
-    `Te informamos que el sensor de ${sensorMap[sensor] || sensor} ha sido deshabilitado en tu sistema hidropónico "${nombreSistema}" (ID: ${idSistema}).\n\n` +
+    `Te informamos que el sensor de ${sensorMap[sensor] || sensor} ha sido **${accion}** en tu sistema hidropónico "${nombreSistema}" (ID: ${idSistema}).\n\n` +
     `Fecha y hora de la acción: ${fechaHora}\n\n` +
-    `Mientras este sensor esté deshabilitado, no se registrarán ni enviarán alertas sobre este parámetro.\n\n` +
-    `Puedes volver a habilitarlo desde la plataforma cuando lo desees.\n\n` +
+    (accion === 'deshabilitado'
+      ? `Mientras este sensor esté deshabilitado, no se registrarán ni enviarán alertas sobre este parámetro.\n\n`
+      : ''
+    ) +
+    `Puedes cambiar su estado desde la plataforma cuando lo desees.\n\n` +
     `Este mensaje ha sido generado automáticamente por el sistema de monitoreo inteligente de cultivos.\n\n` +
     `Atentamente,\nEquipo SmartGrow\n`;
 
@@ -162,10 +167,10 @@ app.post("/api/send-disabled-sensor-alert", async (req, res) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: "Correo de alerta de sensor deshabilitado enviado correctamente." });
+    res.status(200).json({ success: true, message: "Correo de alerta de sensor enviado correctamente." });
   } catch (error) {
-    console.error("Error enviando correo de sensor deshabilitado:", error);
-    res.status(500).json({ success: false, message: "Error al enviar el correo de sensor deshabilitado." });
+    console.error("Error enviando correo de sensor:", error);
+    res.status(500).json({ success: false, message: "Error al enviar el correo de sensor." });
   }
 });
 
