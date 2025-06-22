@@ -236,5 +236,45 @@ app.post("/api/send-system-connected", async (req, res) => {
   }
 });
 
+// ENDPOINT: Enviar correo de recuperación de contraseña personalizado
+app.post("/api/send-password-reset", async (req, res) => {
+  const { email, nombre } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: "El correo es obligatorio." });
+  }
+
+  try {
+    // 1. Generar el enlace de recuperación con Firebase Admin SDK
+    const link = await admin.auth().generatePasswordResetLink(email, {
+      // Puedes poner aquí la URL a la que desees redirigir tras el reset
+      url: "https://app-hdroponico.firebaseapp.com", 
+      handleCodeInApp: false
+    });
+
+    // 2. Arma el correo personalizado
+    const subject = "Restablecimiento de contraseña - SmartGrow";
+    const text = 
+      `Hola ${nombre || ""},\n\n` +
+      `Recibimos una solicitud para restablecer la contraseña de tu cuenta en SmartGrow.\n\n` +
+      `Para crear una nueva contraseña, haz clic en el siguiente enlace:\n${link}\n\n` +
+      `Si no solicitaste este cambio, puedes ignorar este mensaje y tu contraseña se mantendrá igual.\n\n` +
+      `Este mensaje ha sido generado automáticamente.\n\nEquipo SmartGrow`;
+
+    const mailOptions = {
+      from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
+      to: email,
+      subject,
+      text,
+    };
+
+    // 3. Enviar el correo
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Correo de recuperación enviado correctamente." });
+  } catch (error) {
+    console.error("Error enviando correo de recuperación:", error);
+    res.status(500).json({ success: false, message: "Error al enviar el correo de recuperación." });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log("Servidor escuchando en puerto", PORT));
