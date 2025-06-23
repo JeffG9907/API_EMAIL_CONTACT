@@ -236,43 +236,35 @@ app.post("/api/send-system-connected", async (req, res) => {
   }
 });
 
-// ENDPOINT: Enviar correo de recuperación de contraseña personalizado
-app.post("/api/send-password-reset", async (req, res) => {
-  const { email, nombre } = req.body;
-  if (!email) {
-    return res.status(400).json({ success: false, message: "El correo es obligatorio." });
+app.post("/api/send-user-credentials", async (req, res) => {
+  const { to, nombre, password } = req.body;
+  if (!(to && nombre && password)) {
+    return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
 
+  const subject = "Bienvenido a SmartGrow – Tus credenciales de acceso";
+  const text = 
+    `Hola ${nombre},\n\n` +
+    `Tu cuenta ha sido creada en la plataforma SmartGrow.\n\n` +
+    `Puedes acceder con:\n` +
+    `Usuario (correo): ${to}\n` +
+    `Contraseña temporal: ${password}\n\n` +
+    `Por seguridad, te recomendamos cambiar la contraseña después de tu primer inicio de sesión.\n\n` +
+    `¡Bienvenido!\nEquipo SmartGrow`;
+
+  const mailOptions = {
+    from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
+    to,
+    subject,
+    text,
+  };
+
   try {
-    // 1. Generar el enlace de recuperación con Firebase Admin SDK
-    const link = await admin.auth().generatePasswordResetLink(email, {
-      // Puedes poner aquí la URL a la que desees redirigir tras el reset
-      url: "https://app-hdroponico.firebaseapp.com", 
-      handleCodeInApp: false
-    });
-
-    // 2. Arma el correo personalizado
-    const subject = "Restablecimiento de contraseña - SmartGrow";
-    const text = 
-      `Hola ${nombre || ""},\n\n` +
-      `Recibimos una solicitud para restablecer la contraseña de tu cuenta en SmartGrow.\n\n` +
-      `Para crear una nueva contraseña, haz clic en el siguiente enlace:\n${link}\n\n` +
-      `Si no solicitaste este cambio, puedes ignorar este mensaje y tu contraseña se mantendrá igual.\n\n` +
-      `Este mensaje ha sido generado automáticamente.\n\nEquipo SmartGrow`;
-
-    const mailOptions = {
-      from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
-      to: email,
-      subject,
-      text,
-    };
-
-    // 3. Enviar el correo
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: "Correo de recuperación enviado correctamente." });
+    res.status(200).json({ success: true, message: "Correo de credenciales enviado correctamente." });
   } catch (error) {
-    console.error("Error enviando correo de recuperación:", error);
-    res.status(500).json({ success: false, message: "Error al enviar el correo de recuperación." });
+    console.error("Error enviando correo de credenciales:", error);
+    res.status(500).json({ success: false, message: "Error al enviar el correo de credenciales." });
   }
 });
 
