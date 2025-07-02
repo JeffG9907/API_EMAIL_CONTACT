@@ -250,7 +250,7 @@ app.post("/api/send-user-credentials", async (req, res) => {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
 
-  const subject = "Bienvenido a SmartGrow – Tus credenciales de acceso";
+  const subject = "Bienvenido a SmartGrow – Credenciales de Acceso";
   const text =
     `Hola ${nombre},\n\n` +
     `Tu cuenta ha sido creada correctamente en la plataforma SmartGrow.\n\n` +
