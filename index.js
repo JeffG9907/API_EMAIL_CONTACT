@@ -255,17 +255,19 @@ app.post("/api/send-user-credentials", async (req, res) => {
     `• Guía de Conexión de sistema hidropónico\n\n` +
     `¡Bienvenido!\nEquipo SmartGrow`;
 
-  // SIEMPRE adjunta los PDFs fijos
-  const attachments = [
-    {
-      filename: "GUIA_CONEX_SIST_HIDR.pdf",
-      path: path.join(__dirname, "documents", "GUIA_CONEX_SIST_HIDR.pdf")
-    },
-    {
-      filename: "GUIA_CONS_SIST_HIDR.pdf",
-      path: path.join(__dirname, "documents", "GUIA_CONS_SIST_HIDR.pdf")
-    }
-  ].filter(att => fs.existsSync(att.path));
+  const att1 = path.join(__dirname, "documents", "GUIA_CONEX_SIST_HIDR.pdf");
+  const att2 = path.join(__dirname, "documents", "GUIA_CONS_SIST_HIDR.pdf");
+
+  // Agrega logs antes de adjuntar
+  console.log("Adjunto 1:", att1, "¿Existe?", fs.existsSync(att1));
+  console.log("Adjunto 2:", att2, "¿Existe?", fs.existsSync(att2));
+
+  const attachments = [];
+  if (fs.existsSync(att1)) attachments.push({ filename: "GUIA_CONEX_SIST_HIDR.pdf", path: att1 });
+  if (fs.existsSync(att2)) attachments.push({ filename: "GUIA_CONS_SIST_HIDR.pdf", path: att2 });
+
+  // Log de los adjuntos finales
+  console.log("Adjuntos finales enviados:", attachments);
 
   const mailOptions = {
     from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
