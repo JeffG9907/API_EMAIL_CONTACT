@@ -236,27 +236,36 @@ app.post("/api/send-system-connected", async (req, res) => {
   }
 });
 
-app.post("/api/send-user-credentials", async (req, res) => {
-  const { to, nombre, password } = req.body;
+app.post("/send-user-credentials", async (req, res) => {
+  const { to, nombre, password, pdfFiles = [] } = req.body;
   if (!(to && nombre && password)) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
 
   const subject = "Bienvenido a SmartGrow – Tus credenciales de acceso";
-  const text = 
+  const text =
     `Hola ${nombre},\n\n` +
     `Tu cuenta ha sido creada en la plataforma SmartGrow.\n\n` +
     `Puedes acceder con:\n` +
     `Usuario (correo): ${to}\n` +
     `Contraseña temporal: ${password}\n\n` +
     `Por seguridad, te recomendamos cambiar la contraseña después de tu primer inicio de sesión.\n\n` +
+    `A continuación se adjuntan los siguientes documentos:\n` +
+    `• Construcción del sistema hidropónico\n` +
+    `• Guía de usuario\n\n` +
     `¡Bienvenido!\nEquipo SmartGrow`;
+
+  const attachments = pdfFiles.map(pdfPath => ({
+    filename: path.basename(pdfPath),
+    path: pdfPath
+  }));
 
   const mailOptions = {
     from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
     to,
     subject,
     text,
+    attachments
   };
 
   try {
