@@ -6,6 +6,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+import path from "path";
+
 const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_TO } = process.env;
 
 // Configura el transporter de Nodemailer con credenciales de Brevo
