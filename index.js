@@ -236,9 +236,8 @@ app.post("/api/send-system-connected", async (req, res) => {
   }
 });
 
-// ENDPOINT: Enviar credenciales de usuario con adjuntos DESDE /documents (solo nombres)
 app.post("/api/send-user-credentials", async (req, res) => {
-  const { to, nombre, password, pdfFiles = [] } = req.body;
+  const { to, nombre, password } = req.body;
   if (!(to && nombre && password)) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
   }
@@ -253,23 +252,20 @@ app.post("/api/send-user-credentials", async (req, res) => {
     `Por seguridad, te recomendamos cambiar la contraseña después de tu primer inicio de sesión.\n\n` +
     `A continuación se adjuntan los siguientes documentos:\n` +
     `• Guía de Construcción del sistema hidropónico\n` +
-    `• Guía de Conexión de siatema hidropónico\n\n` +
+    `• Guía de Conexión de sistema hidropónico\n\n` +
     `¡Bienvenido!\nEquipo SmartGrow`;
 
-  // Construye paths ABSOLUTOS seguros para los archivos
-  const attachments = [];
-  for (const filename of pdfFiles) {
-    // Sólo permite nombres seguros, no rutas arbitrarias
-    if (/^[\w.\-\(\) ]+\.pdf$/.test(filename)) {
-      const absPath = path.join(__dirname, "documents", filename);
-      if (fs.existsSync(absPath)) {
-        attachments.push({
-          filename,
-          path: absPath
-        });
-      }
+  // SIEMPRE adjunta los PDFs fijos
+  const attachments = [
+    {
+      filename: "GUIA_CONEX_SIST_HIDR.pdf",
+      path: path.join(__dirname, "documents", "GUIA_CONEX_SIST_HIDR.pdf")
+    },
+    {
+      filename: "GUIA_CONS_SIST_HIDR.pdf",
+      path: path.join(__dirname, "documents", "GUIA_CONS_SIST_HIDR.pdf")
     }
-  }
+  ].filter(att => fs.existsSync(att.path));
 
   const mailOptions = {
     from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
