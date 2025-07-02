@@ -236,7 +236,7 @@ app.post("/api/send-system-connected", async (req, res) => {
   }
 });
 
-app.post("/send-user-credentials", async (req, res) => {
+app.post("/api/send-user-credentials", async (req, res) => {
   const { to, nombre, password, pdfFiles = [] } = req.body;
   if (!(to && nombre && password)) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios." });
