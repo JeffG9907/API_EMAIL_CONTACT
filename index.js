@@ -236,6 +236,7 @@ app.post("/api/send-system-connected", async (req, res) => {
   }
 });
 
+// ENDPOINT: Enviar credenciales de usuario con adjuntos DESDE /documents (solo nombres)
 app.post("/api/send-user-credentials", async (req, res) => {
   const { to, nombre, password, pdfFiles = [] } = req.body;
   if (!(to && nombre && password)) {
@@ -245,20 +246,30 @@ app.post("/api/send-user-credentials", async (req, res) => {
   const subject = "Bienvenido a SmartGrow – Tus credenciales de acceso";
   const text =
     `Hola ${nombre},\n\n` +
-    `Tu cuenta ha sido creada en la plataforma SmartGrow.\n\n` +
+    `Tu cuenta ha sido creada correctamente en la plataforma SmartGrow.\n\n` +
     `Puedes acceder con:\n` +
     `Usuario (correo): ${to}\n` +
     `Contraseña temporal: ${password}\n\n` +
     `Por seguridad, te recomendamos cambiar la contraseña después de tu primer inicio de sesión.\n\n` +
     `A continuación se adjuntan los siguientes documentos:\n` +
-    `• Construcción del sistema hidropónico\n` +
-    `• Guía de usuario\n\n` +
+    `• Guía de Construcción del sistema hidropónico\n` +
+    `• Guía de Conexión de siatema hidropónico\n\n` +
     `¡Bienvenido!\nEquipo SmartGrow`;
 
-  const attachments = pdfFiles.map(pdfPath => ({
-    filename: path.basename(pdfPath),
-    path: pdfPath
-  }));
+  // Construye paths ABSOLUTOS seguros para los archivos
+  const attachments = [];
+  for (const filename of pdfFiles) {
+    // Sólo permite nombres seguros, no rutas arbitrarias
+    if (/^[\w.\-\(\) ]+\.pdf$/.test(filename)) {
+      const absPath = path.join(__dirname, "documents", filename);
+      if (fs.existsSync(absPath)) {
+        attachments.push({
+          filename,
+          path: absPath
+        });
+      }
+    }
+  }
 
   const mailOptions = {
     from: `"Equipo SmartGrow" <jcagua4477@utm.edu.ec>`,
