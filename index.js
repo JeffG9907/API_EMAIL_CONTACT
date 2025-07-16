@@ -54,7 +54,7 @@ app.post("/api/contact", async (req, res) => {
   }
 
   const mailOptions = {
-    from: `"${name}" <jcagua4477@utm.edu.ec>`, // Remitente validado
+    from: `"${name}" <bryansalazar1199@gmail.com>`, // Remitente validado
     to: EMAIL_TO, // Destinatario
     replyTo: email, // El correo real del visitante para responderle
     subject,
